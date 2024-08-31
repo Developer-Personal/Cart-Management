@@ -1,13 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dataJson from "./data";
 import Rating from "./Rating";
+import ShoppingCart from "./ShoppingCart";
+
 
 
 function App() {
 
   const [selectedCategory, setSelectedCategory] = useState("0")
-  const [showProduct, setShowProduct] = useState(dataJson)
+  const [showProduct, setShowProduct] = useState([])
   const [sortValue, setSortValue] = useState("0")
+  const [cart, setCart] = useState([])
+
+  useEffect(() => {
+    const updatedProduct = dataJson.map((item => {
+      return {...item, qty : 1}
+    }))
+
+    setShowProduct(updatedProduct)
+  },[])
+
+  const categories = [... new Set(dataJson.map(item => item.category))]
 
   const handleChange = (e) => {
     const updatedProduct = [...dataJson]
@@ -23,10 +36,10 @@ function App() {
   const updatedProductsFunction = (prod, cat, sort) => {
 
     let filterUpdatedProduct = prod
-    if (cat !== "0"){
+    if (cat !== "0") {
       filterUpdatedProduct = prod.filter(item => item.category == cat)
     }
-    
+
 
     if (sort == "asc") {
       filterUpdatedProduct = filterUpdatedProduct.sort((a, b) => a.price - b.price)
@@ -38,11 +51,56 @@ function App() {
     setShowProduct(filterUpdatedProduct)
 
   }
-  const categories = [... new Set(dataJson.map(item => item.category))]
 
+  const handleGoToCart = () => {
+
+  }
+
+  const handleAddCart = (product) => {
+    const updatedCart = [...cart]
+    updatedCart.push({id:product.id, quantity:product.qty})
+    setCart(updatedCart)
+
+  }
+  const handleQtyChange = (id,operation) => {
+    const updatedCart = [...cart]
+    const updatedProduct = [...showProduct]
+    const index = updatedProduct.findIndex(item => item.id == id)
+    const idx = updatedCart.findIndex(item => item.id == id )
+   console.log("idsx   -  ", idx);
+   
+    
+
+    if (operation === "minus"){
+      updatedProduct[index].qty -= 1
+      if(idx != -1){
+        updatedCart[idx].quantity -= 1
+      }
+      else{
+        updatedCart.push({id:id, quantity:1})
+      }
+      
+    }
+    else if(operation === "plus"){
+      updatedProduct[index].qty += 1
+      if(idx != -1){
+        updatedCart[idx].quantity += 1
+      }
+      else{
+        updatedCart.push({id:id, quantity:2})
+      }
+      
+    }
+
+    setShowProduct(updatedProduct)
+    setCart(updatedCart)
+  }
 
   return (
     <div style={{ padding: "10px" }}>
+      <ShoppingCart cart={cart}/>
+
+
       <h1 align="center">PRODUCTS</h1>
       <div style={{ display: "flex", justifyContent: "space-between", padding: "0 20px" }}>
         <div style={{ display: "flex", gap: "10px", alignItems: "center", margin: "20px 0" }}>
@@ -79,6 +137,7 @@ function App() {
 
                 <Rating rating={item.rating.rate} />
 
+
               </div>
 
 
@@ -89,7 +148,12 @@ function App() {
                   item.description.length > 50 ? <p title={item.description}>{item.description.slice(0, 50)}...</p> : <p>{item.description}</p>
                 }
                 <h2 style={{ margin: "5px 0 5px 0" }}>${item.price}</h2>
-                <button style={{ color: "white", background: "black", width: "100%", padding: "8px", position: "absolute", bottom: "5px", left: "0" }}>Add Cart</button>
+                <div style={{display:"flex",alignItems:"center", justifyContent:"center"}}>
+                  <button disabled={item.qty == 1} style={{boxShadow:"0 4px 2px 0  rgba(0, 0, 0, 0.3)", padding:"5px 10px", borderRadius:"50%", border:"none"}} onClick={() => handleQtyChange(item.id,"minus")}>-</button>&nbsp;&nbsp;
+                  <span >{item.qty}</span>&nbsp;&nbsp;
+                  <button style={{boxShadow:"0 4px 2px 0  rgba(0, 0, 0, 0.3)", padding:"5px 10px", borderRadius:"50%", border:"none"}} onClick={() => handleQtyChange(item.id,"plus")}>+</button>
+                </div>
+                {cart.find(obj => obj.id == item.id) ? <button style={{ color: "white", background: "blue", width: "100%", padding: "8px", position: "absolute", bottom: "5px", left: "0" }}>Go To Cart</button> : <button style={{ color: "white", background: "black", width: "100%", padding: "8px", position: "absolute", bottom: "5px", left: "0" }} onClick={() => handleAddCart(item)}>Add Cart</button>}
               </div>
 
 
